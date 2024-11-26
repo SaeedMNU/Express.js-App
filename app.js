@@ -8,17 +8,17 @@ var properties = propertiesReader(propertiesPath);
 
 app.use(express.json());
 
+var staticPath = path.join(__dirname, '..', 'Vue.js-App');
+app.use(express.static(staticPath));
+
+// Middleware: Returns lesson images
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
 // Middleware: Log incoming requests
 app.use((req, res, next) => {
     console.log(`Incoming request: ${req.method} ${req.url}`);
     next();
 });
-
-// Middleware: Returns lesson images
-app.use('/images', express.static(path.join(__dirname, 'static/images')));
-
-var staticPath = path.join(__dirname, "static");
-app.use(express.static(staticPath));
 
 const { ObjectId } = require('mongodb');
 
