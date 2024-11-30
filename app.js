@@ -81,6 +81,7 @@ app.post('/collections/:collectionName', function (req, res, next) {
     });
 });
 
+// PUT route to update lesson data using/and fulfill relevant orders found in the order collection
 app.put('/collections/products/:lessonId', async (req, res) => {
     const lessonId = req.params.lessonId;  // The ID passed in the URL
     try {
@@ -135,6 +136,25 @@ app.put('/collections/products/:lessonId', async (req, res) => {
     } catch (error) {
         console.error("Error processing PUT request:", error);
         res.status(500).json({ message: "Internal server error." });
+    }
+});
+
+// GET route to implement search functionality
+app.get('/search', async (req, res) => {
+    const searchTerm = req.query.q;
+    try {
+        const lessons = await db.collection("products").find({
+            $or: [
+                { topic: new RegExp(searchTerm, 'i') },
+                { location: new RegExp(searchTerm, 'i') },
+                { price: new RegExp(searchTerm, 'i') },
+                { availableSpaces: new RegExp(searchTerm, 'i') }
+            ]
+        }).toArray();
+        res.json(lessons);
+    } catch (err) {
+        console.error("Error searching lessons:", err);
+        res.status(500).send("Error searching lessons in database.");
     }
 });
 
