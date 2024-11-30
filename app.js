@@ -142,15 +142,28 @@ app.put('/collections/products/:lessonId', async (req, res) => {
 // GET route to implement search functionality
 app.get('/search', async (req, res) => {
     const searchTerm = req.query.q;
+    const searchRegex = new RegExp(searchTerm, 'i');
+
     try {
-        const lessons = await db.collection("products").find({
-            $or: [
-                { topic: new RegExp(searchTerm, 'i') },
-                { location: new RegExp(searchTerm, 'i') },
-                { price: new RegExp(searchTerm, 'i') },
-                { availableSpaces: new RegExp(searchTerm, 'i') }
-            ]
-        }).toArray();
+        const lessons = await db.collection("products").aggregate([
+            {
+                $addFields: {
+                    priceAsString: { $toString: "$price" },
+                    availableSpacesAsString: { $toString: "$availableSpaces" }
+                }
+            },
+            {
+                $match: {
+                    $or: [
+                        { topic: searchRegex },
+                        { location: searchRegex },
+                        { priceAsString: searchRegex },
+                        { availableSpacesAsString: searchRegex }
+                    ]
+                }
+            }
+        ]).toArray();
+
         res.json(lessons);
     } catch (err) {
         console.error("Error searching lessons:", err);
