@@ -43,6 +43,7 @@ app.param('collectionName', function (req, res, next, collectionName) {
 // Endpoint to retrieve all lessons from the database collection "products"
 app.get('/lessons', async function (req, res) {
     try {
+        // Puts fetched data into an array to be referenced later
         const lessons = await db.collection("products").find({}).toArray();
         res.json(lessons);
     } catch (err) {
@@ -93,7 +94,7 @@ app.put('/collections/products/:lessonId', async (req, res) => {
             return res.status(404).json({ message: "Lesson not found." });
         }
 
-        // Search for unfulfilled orders that reference the lesson's 'id' field
+        // Sets the search value for unfulfilled orders that reference the lesson's 'id' field
         const unfulfilledOrders = await db.collection('order').find({
             id: lesson.id,   // Search by the 'id' field from the order collection
             fulfilled: false
@@ -116,6 +117,7 @@ app.put('/collections/products/:lessonId', async (req, res) => {
             { $set: { availableSpaces: newAvailableSpaces } }
         );
 
+        // Returns a failure message if no lesson data was updated
         if (updateLessonResult.modifiedCount === 0) {
             return res.status(500).json({ message: "Failed to update lesson." });
         }
@@ -126,6 +128,7 @@ app.put('/collections/products/:lessonId', async (req, res) => {
             { $set: { fulfilled: true } }
         );
 
+        // Returns a failure message if no order data was updated
         if (updateOrdersResult.modifiedCount === 0) {
             return res.status(500).json({ message: "Failed to update orders." });
         }
@@ -142,10 +145,12 @@ app.put('/collections/products/:lessonId', async (req, res) => {
 
 // GET route to implement search functionality
 app.get('/search', async (req, res) => {
+    // Extracts and creates a case-insensitive expression based on the search term
     const searchTerm = req.query.q;
     const searchRegex = new RegExp(searchTerm, 'i');
 
     try {
+        // Temporarily modify the document to support flexible searches through number inputs
         const lessons = await db.collection("products").aggregate([
             {
                 $addFields: {
@@ -154,6 +159,7 @@ app.get('/search', async (req, res) => {
                 }
             },
             {
+                // Search each of the given fields for the search term as a string
                 $match: {
                     $or: [
                         { topic: searchRegex },
@@ -163,7 +169,7 @@ app.get('/search', async (req, res) => {
                     ]
                 }
             }
-        ]).toArray();
+        ]).toArray(); // To format the result(s)
 
         res.json(lessons);
     } catch (err) {
