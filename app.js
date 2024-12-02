@@ -1,11 +1,12 @@
+// Necessary require/import values
 var express = require("express");
 var path = require("path");
 var app = express();
 var propertiesReader = require("properties-reader");
 var propertiesPath = path.resolve(__dirname, "conf/db.properties");
 var properties = propertiesReader(propertiesPath);
-
 app.use(express.json());
+const { ObjectId } = require('mongodb');
 
 var staticPath = path.join(__dirname, '..', 'Vue.js-App');
 app.use(express.static(staticPath));
@@ -19,8 +20,7 @@ app.use((req, res, next) => {
     next();
 });
 
-const { ObjectId } = require('mongodb');
-
+// Referencing database connection details to access the database
 let dbPprefix = properties.get("db.prefix");
 let dbUsername = encodeURIComponent(properties.get("db.user"));
 let dbPwd = encodeURIComponent(properties.get("db.pwd"));
@@ -29,6 +29,7 @@ let dbUrl = properties.get("db.dbUrl");
 let dbParams = properties.get("db.params");
 const uri = dbPprefix + dbUsername + ":" + dbPwd + dbUrl + dbParams;
 
+// Connects to the database via the connection details using the Node.js driver
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const client = new MongoClient(uri, { serverApi: ServerApiVersion.v1 });
 let db = client.db(dbName);
@@ -176,6 +177,7 @@ app.use((req, res) => {
     res.status(404).send("Resource not found");
 });
 
+// Starts and logs the server start on the given port
 app.listen(3000, function () {
     console.log("App started on port 3000");
 });
